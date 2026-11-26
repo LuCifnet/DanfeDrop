@@ -672,7 +672,7 @@ input {
 
 .format-table .format-action-heading,
 .format-table .table-action-cell {
-  text-align: right;
+  text-align: center;
 }
 
 .format-table td {
