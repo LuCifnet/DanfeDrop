@@ -25,7 +25,7 @@ def run_download_job(
     title: str,
 ):
     r"""
-    Downloads and converts media using yt-dlp directly into TARGET_DOWNLOAD_DIR (C:\Users\Kapil\Music\newmusic).
+    Downloads and converts media using yt-dlp directly into TARGET_DOWNLOAD_DIR.
     """
 
     os.makedirs(TARGET_DOWNLOAD_DIR, exist_ok=True)

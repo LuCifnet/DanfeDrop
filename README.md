@@ -12,11 +12,7 @@ A modern, fast, and human-designed web application for downloading YouTube video
 - **Terms of Use & API**: Built-in modal and REST API endpoint (`GET /api/terms`) providing structured usage policies.
 - **Real Media Analysis**: Uses `yt-dlp` to extract genuine streams and available qualities (resolutions 2160p 4K down to 144p; MP3 320/192/128 kbps; original M4A streams).
 - **Smooth Real-Time Progress Indicator**: Real-time Server-Sent Events (SSE) stream percentage, downloaded vs total byte sizes, download speed (MB/s), and ETA time remaining.
-- **Automatic Output Target**: Downloaded media is saved directly into:
-  ```
-  C:\Users\Kapil\Music\newmusic
-  ```
-  Files can also be saved directly through the browser at any time.
+- **Configurable Output Target**: Downloads are saved on the machine running the backend. By default, local Windows runs use the current user's `Music/newmusic` folder; Linux runs use `/tmp/danfedrop_downloads`. Set the `DOWNLOAD_DIR` environment variable to choose another folder. When hosted, all visitors use the backend's configured folder; files are not saved to each visitor's computer, and `/tmp` storage may be cleared when the host restarts.
 - **Robust Error Handling**: Friendly notifications for age-restricted, private, or invalid YouTube links.
 - **Cancellation Support**: Safely cancel downloads mid-stream.
 - **Clean Architecture (KISS & DRY)**:
@@ -97,7 +93,7 @@ python run.py
 > **Note:** Make sure you're signed into YouTube in your browser before exporting cookies.
 
 ### 2. Launch the Application
-Run the launcher from the project root:
+Run the launcher from the project root. Downloads are written to the backend machine's configured output folder described above; they are not automatically placed on a remote visitor's computer.
 ```powershell
 python run.py
 ```

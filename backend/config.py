@@ -1,12 +1,13 @@
 import os
+from pathlib import Path
 
 # Default target download folder:
-# - On Windows local dev: C:\Users\Kapil\Music\newmusic
+# - On Windows local dev: the current user's Music\\newmusic folder
 # - On Linux/cloud (Render/Docker): /tmp/danfedrop_downloads (or DOWNLOAD_DIR env var)
 if os.environ.get("DOWNLOAD_DIR"):
     TARGET_DOWNLOAD_DIR = os.environ["DOWNLOAD_DIR"]
 elif os.name == "nt":
-    TARGET_DOWNLOAD_DIR = r"C:\Users\Kapil\Music\newmusic"
+    TARGET_DOWNLOAD_DIR = str(Path.home() / "Music" / "newmusic")
 else:
     TARGET_DOWNLOAD_DIR = "/tmp/danfedrop_downloads"
 

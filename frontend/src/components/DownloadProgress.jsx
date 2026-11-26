@@ -94,7 +94,7 @@ export default function DownloadProgress({
         <div className="progress-actions" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#059669', fontSize: '0.875rem' }}>
             <CheckCircle2 size={18} />
-            <span>Saved to <strong>{savedDir || 'C:\\Users\\Kapil\\Music\\newmusic'}</strong></span>
+            <span>Saved to <strong>{savedDir || 'the server download folder'}</strong></span>
           </div>
           <button
             type="button"
