@@ -160,6 +160,15 @@ export function useDownloadProgress({ onComplete } = {}) {
     onComplete?.();
   }, [onComplete]);
 
+  const clearFinishedDownload = useCallback(() => {
+    if (!downloadState || !['completed', 'cancelled', 'error'].includes(downloadState.status)) return;
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+    }
+    setDownloadState(null);
+  }, [downloadState]);
+
   const isDownloading = downloadState && ['downloading', 'queued', 'processing'].includes(downloadState.status);
 
   return {
@@ -167,6 +176,7 @@ export function useDownloadProgress({ onComplete } = {}) {
     startDownload,
     cancelActiveDownload,
     dismissDownload,
+    clearFinishedDownload,
     isDownloading,
   };
 }

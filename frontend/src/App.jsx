@@ -50,6 +50,7 @@ export default function App() {
     startDownload,
     cancelActiveDownload,
     dismissDownload,
+    clearFinishedDownload,
     isDownloading,
   } = useDownloadProgress({ onComplete: handleDownloadComplete });
 
@@ -73,6 +74,7 @@ export default function App() {
       return;
     }
 
+    clearFinishedDownload();
     setError(null);
     setAnalyzing(true);
     setVideoData(null);
@@ -85,7 +87,7 @@ export default function App() {
     } finally {
       setAnalyzing(false);
     }
-  }, [url]);
+  }, [url, clearFinishedDownload]);
 
   // Form submit handler
   const handleAnalyzeSubmit = (e) => {
@@ -134,6 +136,7 @@ export default function App() {
           url={url}
           setUrl={(val) => {
             setUrl(val);
+            if (val.trim()) clearFinishedDownload();
             if (error) setError(null);
           }}
           onAnalyze={handleAnalyzeSubmit}

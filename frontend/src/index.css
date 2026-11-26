@@ -645,10 +645,18 @@ input {
 
 .format-table {
   width: 100%;
+  min-width: 680px;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 0.875rem;
   text-align: left;
 }
+
+.format-column-quality { width: 25%; }
+.format-column-format { width: 15%; }
+.format-column-audio { width: 20%; }
+.format-column-size { width: 18%; }
+.format-column-action { width: 22%; }
 
 .format-table th {
   padding: 0.75rem 1rem;
@@ -659,6 +667,12 @@ input {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   border-bottom: 1px solid var(--border-light);
+  white-space: nowrap;
+}
+
+.format-table .format-action-heading,
+.format-table .table-action-cell {
+  text-align: right;
 }
 
 .format-table td {
@@ -719,8 +733,7 @@ input {
 }
 
 .table-action-cell {
-  text-align: right;
-  width: 130px;
+  white-space: nowrap;
 }
 
 /* Download Progress Banner / Box */

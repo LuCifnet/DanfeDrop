@@ -20,13 +20,20 @@ export default function FormatTable({
   return (
     <div className="format-table-wrapper">
       <table className="format-table">
+        <colgroup>
+          <col className="format-column-quality" />
+          <col className="format-column-format" />
+          <col className="format-column-audio" />
+          <col className="format-column-size" />
+          <col className="format-column-action" />
+        </colgroup>
         <thead>
           <tr>
             <th>Quality</th>
             <th>Format</th>
             <th>{isVideo ? 'Audio' : 'Bitrate'}</th>
             <th>Est. Size</th>
-            <th style={{ textAlign: 'right' }}>Action</th>
+            <th className="format-action-heading">Action</th>
           </tr>
         </thead>
         <tbody>
