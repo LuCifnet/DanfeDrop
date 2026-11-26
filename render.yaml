@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: danfedrop
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/config
+    envVars:
+      - key: DOWNLOAD_DIR
+        value: /tmp/danfedrop_downloads
