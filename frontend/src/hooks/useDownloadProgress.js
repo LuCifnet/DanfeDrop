@@ -160,13 +160,6 @@ export function useDownloadProgress({ onComplete } = {}) {
     onComplete?.();
   }, [onComplete]);
 
-  const saveCompletedFile = useCallback(() => {
-    if (!downloadState?.taskId || downloadState.status !== 'completed') return;
-    const link = document.createElement('a');
-    link.href = `/api/file/${encodeURIComponent(downloadState.taskId)}`;
-    link.click();
-  }, [downloadState]);
-
   const isDownloading = downloadState && ['downloading', 'queued', 'processing'].includes(downloadState.status);
 
   return {
@@ -174,7 +167,6 @@ export function useDownloadProgress({ onComplete } = {}) {
     startDownload,
     cancelActiveDownload,
     dismissDownload,
-    saveCompletedFile,
     isDownloading,
   };
 }

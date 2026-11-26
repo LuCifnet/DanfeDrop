@@ -5,7 +5,6 @@ export default function DownloadProgress({
   downloadState, 
   onCancel, 
   onDismiss, 
-  onSaveFile 
 }) {
   if (!downloadState) return null;
 
@@ -91,15 +90,15 @@ export default function DownloadProgress({
         <div className="progress-actions" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#059669', fontSize: '0.875rem' }}>
             <CheckCircle2 size={18} />
-            <span>Your file is ready. Save it to your device.</span>
+            <span>Saved to your configured download folder.</span>
           </div>
           <button
             type="button"
             className="btn-primary"
-            onClick={onSaveFile}
+            onClick={onDismiss}
             style={{ padding: '0.45rem 1.25rem' }}
           >
-            Download to your device
+            Done
           </button>
         </div>
       )}

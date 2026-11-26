@@ -1,4 +1,3 @@
-import os
 import json
 import uuid
 import time
@@ -6,7 +5,7 @@ import asyncio
 import threading
 from typing import Optional, Literal
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import StreamingResponse, FileResponse, JSONResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel, Field
 
 from ..config import TARGET_DOWNLOAD_DIR
@@ -206,23 +205,4 @@ async def cancel_download_task(task_id: str, request: Request):
     enforce_rate_limit(request, "cancel", 30, 60)
     success = cancel_task(task_id)
     return {"success": success, "message": "Cancellation requested"}
-
-@router.get("/file/{task_id}")
-async def download_file(task_id: str, request: Request):
-    enforce_rate_limit(request, "file", 10, 3600)
-    task = get_task(task_id)
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
-    if task["status"] != "completed":
-        raise HTTPException(status_code=400, detail="File is not ready yet")
-
-    file_path = task.get("file_path")
-    if not file_path or not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File not found on disk")
-
-    return FileResponse(
-        file_path,
-        media_type="application/octet-stream",
-        filename=os.path.basename(task.get("filename") or file_path),
-    )
 

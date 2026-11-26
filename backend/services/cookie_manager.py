@@ -65,7 +65,7 @@ def get_cookie_file() -> Optional[str]:
     if has_valid_cookie_file(YOUTUBE_COOKIES):
         return YOUTUBE_COOKIES
 
-    # 1b. Environment variable raw cookies content (for cloud hosting like Render)
+    # 1b. Environment variable raw cookies content (for hosted deployments)
     if YOUTUBE_COOKIES_CONTENT and YOUTUBE_COOKIES_CONTENT.strip():
         env_cookie_path = os.path.join(TARGET_DOWNLOAD_DIR, ".env_cookies.txt")
         try:

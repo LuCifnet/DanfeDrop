@@ -3,7 +3,7 @@ from pathlib import Path
 
 # Default target download folder:
 # - On Windows local dev: the current user's Music\\newmusic folder
-# - On Linux/cloud (Render/Docker): /tmp/danfedrop_downloads (or DOWNLOAD_DIR env var)
+# - On Linux: /tmp/danfedrop_downloads (or DOWNLOAD_DIR env var)
 if os.environ.get("DOWNLOAD_DIR"):
     TARGET_DOWNLOAD_DIR = os.environ["DOWNLOAD_DIR"]
 elif os.name == "nt":

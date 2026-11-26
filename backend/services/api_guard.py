@@ -15,7 +15,7 @@ _analysis_slots = threading.BoundedSemaphore(4)
 
 
 def get_client_key(request: Request) -> str:
-    """Use Render's rightmost appended client IP, or the direct peer locally."""
+    """Use the rightmost appended proxy IP, or the direct peer locally."""
     forwarded_for = request.headers.get("x-forwarded-for", "")
     for candidate in reversed(forwarded_for.split(",")):
         try:
