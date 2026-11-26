@@ -52,14 +52,4 @@ export async function fetchTermsOfService() {
   return res.json();
 }
 
-export async function fetchCookieStatus() {
-  const res = await fetch('/api/cookies');
-  return res.json();
-}
-
-export async function refreshCookies() {
-  const res = await fetch('/api/cookies/refresh', { method: 'POST' });
-  return res.json();
-}
-
 

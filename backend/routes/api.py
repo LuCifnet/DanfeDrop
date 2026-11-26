@@ -4,25 +4,26 @@ import uuid
 import time
 import asyncio
 import threading
-from typing import Optional
+from typing import Optional, Literal
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse, FileResponse, JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ..config import TARGET_DOWNLOAD_DIR
 from ..services.extractor import extract_media_info
 from ..services.downloader import run_download_job
 from ..services.legal import get_terms_of_service
-from ..services.cookie_manager import (
-    get_cookie_file,
-    refresh_cookies_from_browser,
-    has_valid_cookie_file,
-)
 from ..services.task_manager import (
     create_task,
     get_task,
     cancel_task,
 )
+from ..services.api_guard import (
+    acquire_analysis_slot,
+    enforce_rate_limit,
+    release_analysis_slot,
+)
+from ..utils.validators import validate_youtube_url
 
 
 router = APIRouter(prefix="/api")
@@ -37,57 +38,55 @@ async def get_terms():
 
 
 class AnalyzeRequest(BaseModel):
-    url: str
+    url: str = Field(min_length=11, max_length=2048)
 
 class DownloadRequest(BaseModel):
-    url: str
-    type: str  # "video" or "audio"
-    format_id: Optional[str] = None
-    height: Optional[int] = None
-    ext: str = "mp4"
-    bitrate: Optional[int] = None
-    title: str = "media"
-    quality: str = ""
+    url: str = Field(min_length=11, max_length=2048)
+    type: Literal["video", "audio"]
+    format_id: Optional[str] = Field(default=None, max_length=40, pattern=r"^[A-Za-z0-9._-]+$")
+    height: Optional[int] = Field(default=None, ge=1, le=4320)
+    ext: Literal["mp4", "mp3", "m4a"] = "mp4"
+    bitrate: Optional[Literal[128, 192, 320]] = None
+    title: str = Field(default="media", max_length=200)
+    quality: str = Field(default="", max_length=80)
 
 @router.get("/config")
 async def get_system_config():
     """Health check endpoint without exposing server filesystem paths."""
     return {"success": True}
 
-@router.get("/cookies")
-async def get_cookie_status():
-    """Return status of YouTube authentication cookies."""
-    path = get_cookie_file()
-    has_cookies = has_valid_cookie_file(path)
-    return {
-        "success": True,
-        "has_cookies": has_cookies,
-        "cookie_file": path if has_cookies else None,
-    }
-
-@router.post("/cookies/refresh")
-async def trigger_cookie_refresh():
-    """Attempt re-extracting YouTube cookies from installed browsers."""
-    success, msg = await asyncio.to_thread(refresh_cookies_from_browser)
-    return {
-        "success": success,
-        "message": msg,
-        "cookie_file": get_cookie_file(),
-    }
-
-
 @router.post("/analyze")
-async def analyze_video(req: AnalyzeRequest):
+async def analyze_video(req: AnalyzeRequest, request: Request):
+    enforce_rate_limit(request, "analyze", 20, 60)
+    if not validate_youtube_url(req.url):
+        raise HTTPException(status_code=400, detail="Please provide a valid YouTube video URL.")
+    if not acquire_analysis_slot():
+        raise HTTPException(
+            status_code=429,
+            detail="Video analysis is busy. Please wait a moment and try again.",
+            headers={"Retry-After": "30"},
+        )
     try:
         data = await asyncio.to_thread(extract_media_info, req.url)
         return {"success": True, "data": data}
     except ValueError as e:
         return JSONResponse(status_code=400, content={"success": False, "detail": str(e)})
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"success": False, "detail": f"Server error: {str(e)}"})
+    except Exception:
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "detail": "Could not analyze this video. Please try again later."},
+        )
+    finally:
+        release_analysis_slot()
 
 @router.post("/download")
-async def start_download(req: DownloadRequest):
+async def start_download(req: DownloadRequest, request: Request):
+    client_key = enforce_rate_limit(request, "download", 5, 3600)
+    if not validate_youtube_url(req.url):
+        raise HTTPException(status_code=400, detail="Please provide a valid YouTube video URL.")
+    if (req.type == "video" and req.ext != "mp4") or (req.type == "audio" and req.ext not in {"mp3", "m4a"}):
+        raise HTTPException(status_code=422, detail="The selected file format is not valid for this download type.")
+
     task_id = str(uuid.uuid4())
 
     task_payload = {
@@ -108,11 +107,17 @@ async def start_download(req: DownloadRequest):
         "filename": None,
         "file_path": None,
         "saved_dir": TARGET_DOWNLOAD_DIR,
+        "client_key": client_key,
         "error": None,
         "created_at": time.time(),
     }
 
-    create_task(task_id, task_payload)
+    if not create_task(task_id, task_payload):
+        raise HTTPException(
+            status_code=429,
+            detail="The download service is busy. Please wait for a download to finish and try again.",
+            headers={"Retry-After": "60"},
+        )
 
     worker = threading.Thread(
         target=run_download_job,
@@ -133,7 +138,8 @@ async def start_download(req: DownloadRequest):
     return {"success": True, "task_id": task_id}
 
 @router.get("/status/{task_id}")
-async def get_task_status(task_id: str):
+async def get_task_status(task_id: str, request: Request):
+    enforce_rate_limit(request, "status", 120, 60)
     task = get_task(task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -152,6 +158,7 @@ async def get_task_status(task_id: str):
 @router.get("/progress/{task_id}")
 async def stream_progress(task_id: str, request: Request):
     """Server-Sent Events endpoint to stream real-time progress updates."""
+    enforce_rate_limit(request, "progress", 20, 60)
     async def event_generator():
         while True:
             if await request.is_disconnected():
@@ -195,12 +202,14 @@ async def stream_progress(task_id: str, request: Request):
     )
 
 @router.post("/cancel/{task_id}")
-async def cancel_download_task(task_id: str):
+async def cancel_download_task(task_id: str, request: Request):
+    enforce_rate_limit(request, "cancel", 30, 60)
     success = cancel_task(task_id)
     return {"success": success, "message": "Cancellation requested"}
 
 @router.get("/file/{task_id}")
-async def download_file(task_id: str):
+async def download_file(task_id: str, request: Request):
+    enforce_rate_limit(request, "file", 10, 3600)
     task = get_task(task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")

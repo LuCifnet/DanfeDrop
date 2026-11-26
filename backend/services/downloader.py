@@ -239,7 +239,11 @@ def run_download_job(
                 error="YouTube requested sign-in confirmation. Please keep Firefox logged into YouTube or export cookies into backend/cookies.txt.",
             )
         else:
-            update_task(task_id, status="error", error=cleaned_msg)
+            update_task(
+                task_id,
+                status="error",
+                error="Download failed. Please try a different video or try again later.",
+            )
 
         # Cleanup incomplete/part files
         try:

@@ -15,6 +15,7 @@ A modern, fast, and human-designed web application for downloading YouTube video
 - **Downloads to Your Device**: The backend creates each media file on its own machine, then the visitor clicks **Download to your device** to receive it through their browser. The browser saves it to its configured download location (often the visitor's Downloads folder). Locally, Windows uses the current user's `Music/newmusic` folder by default; Linux uses `/tmp/danfedrop_downloads`. Set `DOWNLOAD_DIR` to choose another server-side folder. Hosted temporary files may be cleared when the host restarts.
 - **Robust Error Handling**: Friendly notifications for age-restricted, private, or invalid YouTube links.
 - **Cancellation Support**: Safely cancel downloads mid-stream.
+- **Public API Abuse Controls**: Server-side YouTube URL validation, per-client request limits, and a small cap on concurrent downloads. These controls reduce routine abuse but do not replace DDoS protection or a shared rate-limit store if the service is later scaled to multiple instances.
 - **Clean Architecture (KISS & DRY)**:
   - Decomposed into focused services, validators, formatters, and reusable React components.
 

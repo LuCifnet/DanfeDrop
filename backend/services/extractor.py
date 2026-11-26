@@ -108,7 +108,7 @@ def extract_media_info(url: str) -> Dict[str, Any]:
                 "YouTube is requiring authentication. Please ensure you are logged into YouTube in your browser or save cookies to backend/cookies.txt."
             )
         else:
-            raise ValueError(f"Could not retrieve video information: {err}")
+            raise ValueError("Could not retrieve video information. Please try again later.")
 
     if not info:
         raise ValueError("No video information could be found.")

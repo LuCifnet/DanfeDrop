@@ -3,7 +3,6 @@ import time
 import threading
 from fastapi import FastAPI, Response
 from fastapi.responses import FileResponse
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from .routes.api import router as api_router
@@ -15,15 +14,6 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Enable CORS for development frontend
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 # Register API Router
 app.include_router(api_router)
 
@@ -32,8 +22,6 @@ app.include_router(api_router)
 async def chrome_devtools_probe():
     return Response(status_code=204)
 
-
-from .services.cookie_manager import get_cookie_file
 
 # Periodic background task to clean up old task tracking
 def background_cleanup_loop():
