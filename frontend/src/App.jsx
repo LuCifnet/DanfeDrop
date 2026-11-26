@@ -50,6 +50,7 @@ export default function App() {
     startDownload,
     cancelActiveDownload,
     dismissDownload,
+    saveCompletedFile,
     isDownloading,
   } = useDownloadProgress({ onComplete: handleDownloadComplete });
 
@@ -150,6 +151,7 @@ export default function App() {
           downloadState={downloadState}
           onCancel={cancelActiveDownload}
           onDismiss={dismissDownload}
+          onSaveFile={saveCompletedFile}
         />
 
 

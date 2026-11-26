@@ -4,16 +4,12 @@ import { initiateDownload, cancelDownload, fetchTaskStatus } from '../services/a
 export function useDownloadProgress({ onComplete } = {}) {
   const [downloadState, setDownloadState] = useState(null);
   const eventSourceRef = useRef(null);
-  const autoDismissTimerRef = useRef(null);
 
-  // Close active SSE and timers on unmount
+  // Close active SSE on unmount
   useEffect(() => {
     return () => {
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
-      }
-      if (autoDismissTimerRef.current) {
-        clearTimeout(autoDismissTimerRef.current);
       }
     };
   }, []);
@@ -59,9 +55,8 @@ export function useDownloadProgress({ onComplete } = {}) {
 
       const res = await initiateDownload(payload);
       const taskId = res.task_id;
-      const savedDir = res.saved_dir || '';
 
-      setDownloadState(prev => ({ ...prev, taskId, savedDir, status: 'downloading' }));
+      setDownloadState(prev => ({ ...prev, taskId, status: 'downloading' }));
 
       // Setup Server-Sent Events
       if (eventSourceRef.current) {
@@ -93,19 +88,11 @@ export function useDownloadProgress({ onComplete } = {}) {
             speed: update.speed_formatted,
             eta: update.eta_formatted,
             filename: update.filename,
-            savedDir: update.saved_dir || prev.savedDir,
             error: update.error,
           }));
 
           if (update.status === 'completed') {
             es.close();
-            // Show 100% completed status briefly, then automatically dismiss and clear all
-            if (autoDismissTimerRef.current) clearTimeout(autoDismissTimerRef.current);
-            autoDismissTimerRef.current = setTimeout(() => {
-              setDownloadState(null);
-              onComplete?.();
-              autoDismissTimerRef.current = null;
-            }, 1500);
           } else if (['error', 'cancelled'].includes(update.status)) {
             es.close();
           }
@@ -130,17 +117,11 @@ export function useDownloadProgress({ onComplete } = {}) {
               speed: t.speed_formatted,
               eta: t.eta_formatted,
               filename: t.filename,
-              savedDir: t.saved_dir,
               error: t.error,
             }));
 
             if (t.status === 'completed') {
-              if (autoDismissTimerRef.current) clearTimeout(autoDismissTimerRef.current);
-              autoDismissTimerRef.current = setTimeout(() => {
-                setDownloadState(null);
-                onComplete?.();
-                autoDismissTimerRef.current = null;
-              }, 1500);
+              return;
             }
           }
         } catch {
@@ -158,10 +139,6 @@ export function useDownloadProgress({ onComplete } = {}) {
   }, [downloadState, onComplete]);
 
   const cancelActiveDownload = useCallback(async () => {
-    if (autoDismissTimerRef.current) {
-      clearTimeout(autoDismissTimerRef.current);
-      autoDismissTimerRef.current = null;
-    }
     if (!downloadState || !downloadState.taskId) return;
     try {
       await cancelDownload(downloadState.taskId);
@@ -179,13 +156,16 @@ export function useDownloadProgress({ onComplete } = {}) {
   }, [downloadState]);
 
   const dismissDownload = useCallback(() => {
-    if (autoDismissTimerRef.current) {
-      clearTimeout(autoDismissTimerRef.current);
-      autoDismissTimerRef.current = null;
-    }
     setDownloadState(null);
     onComplete?.();
   }, [onComplete]);
+
+  const saveCompletedFile = useCallback(() => {
+    if (!downloadState?.taskId || downloadState.status !== 'completed') return;
+    const link = document.createElement('a');
+    link.href = `/api/file/${encodeURIComponent(downloadState.taskId)}`;
+    link.click();
+  }, [downloadState]);
 
   const isDownloading = downloadState && ['downloading', 'queued', 'processing'].includes(downloadState.status);
 
@@ -194,6 +174,7 @@ export function useDownloadProgress({ onComplete } = {}) {
     startDownload,
     cancelActiveDownload,
     dismissDownload,
+    saveCompletedFile,
     isDownloading,
   };
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, ArrowDownToLine, FolderCheck } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 
 export default function DownloadProgress({ 
   downloadState, 
@@ -10,7 +10,6 @@ export default function DownloadProgress({
   if (!downloadState) return null;
 
   const {
-    taskId,
     targetLabel,
     status,
     progress,
@@ -18,8 +17,6 @@ export default function DownloadProgress({
     total,
     speed,
     eta,
-    filename,
-    savedDir,
     error,
   } = downloadState;
 
@@ -94,15 +91,15 @@ export default function DownloadProgress({
         <div className="progress-actions" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#059669', fontSize: '0.875rem' }}>
             <CheckCircle2 size={18} />
-            <span>Saved to <strong>{savedDir || 'the server download folder'}</strong></span>
+            <span>Your file is ready. Save it to your device.</span>
           </div>
           <button
             type="button"
             className="btn-primary"
-            onClick={onDismiss}
+            onClick={onSaveFile}
             style={{ padding: '0.45rem 1.25rem' }}
           >
-            Done
+            Download to your device
           </button>
         </div>
       )}

@@ -51,11 +51,8 @@ class DownloadRequest(BaseModel):
 
 @router.get("/config")
 async def get_system_config():
-    """Return configured download path information."""
-    return {
-        "success": True,
-        "target_download_dir": TARGET_DOWNLOAD_DIR,
-    }
+    """Health check endpoint without exposing server filesystem paths."""
+    return {"success": True}
 
 @router.get("/cookies")
 async def get_cookie_status():
@@ -133,14 +130,24 @@ async def start_download(req: DownloadRequest):
     )
     worker.start()
 
-    return {"success": True, "task_id": task_id, "saved_dir": TARGET_DOWNLOAD_DIR}
+    return {"success": True, "task_id": task_id}
 
 @router.get("/status/{task_id}")
 async def get_task_status(task_id: str):
     task = get_task(task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
-    return {"success": True, "data": task}
+    public_fields = (
+        "status",
+        "progress",
+        "downloaded_formatted",
+        "total_formatted",
+        "speed_formatted",
+        "eta_formatted",
+        "filename",
+        "error",
+    )
+    return {"success": True, "data": {key: task.get(key) for key in public_fields}}
 
 @router.get("/progress/{task_id}")
 async def stream_progress(task_id: str, request: Request):
@@ -167,7 +174,6 @@ async def stream_progress(task_id: str, request: Request):
                 "quality": task.get("quality", ""),
                 "ext": task.get("ext", ""),
                 "filename": task.get("filename", ""),
-                "saved_dir": task.get("saved_dir", TARGET_DOWNLOAD_DIR),
                 "error": task.get("error"),
             }
 
@@ -195,11 +201,6 @@ async def cancel_download_task(task_id: str):
 
 @router.get("/file/{task_id}")
 async def download_file(task_id: str):
-    r"""
-    Files are saved directly to TARGET_DOWNLOAD_DIR.
-    Browser file stream attachment is disabled to prevent duplicate files in Downloads folder.
-    """
-
     task = get_task(task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -210,11 +211,9 @@ async def download_file(task_id: str):
     if not file_path or not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="File not found on disk")
 
-    return {
-        "success": True,
-        "saved_dir": TARGET_DOWNLOAD_DIR,
-        "file_path": file_path,
-        "filename": task.get("filename"),
-        "message": f"File is saved exclusively in {TARGET_DOWNLOAD_DIR}",
-    }
+    return FileResponse(
+        file_path,
+        media_type="application/octet-stream",
+        filename=os.path.basename(task.get("filename") or file_path),
+    )
 
